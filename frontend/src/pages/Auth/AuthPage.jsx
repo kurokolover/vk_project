@@ -1,7 +1,30 @@
 import { useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ArrowUpRight, ChevronRight, KeyRound, Radio, Sparkles, UserRoundCog, UsersRound } from "lucide-react";
 import { apiRequest } from "../../services/api";
 import "./AuthPage.css";
+
+const routes = [
+  {
+    role: "participant",
+    icon: UsersRound,
+    title: "Я участник",
+    text: "Вхожу в комнату по коду и отвечаю на вопросы в прямом эфире.",
+    action: "Стать участником"
+  },
+  {
+    role: "organizer",
+    icon: UserRoundCog,
+    title: "Я организатор",
+    text: "Создаю квиз, запускаю комнату и веду участников по вопросам.",
+    action: "Стать организатором"
+  }
+];
+
+const flow = [
+  { value: "01", label: "Квиз" },
+  { value: "02", label: "Комната" },
+  { value: "03", label: "Лидерборд" }
+];
 
 export function AuthPage({ onAuth, notify, toast }) {
   const [mode, setMode] = useState("login");
@@ -25,28 +48,91 @@ export function AuthPage({ onAuth, notify, toast }) {
     }
   }
 
+  function chooseRoute(role) {
+    setMode("register");
+    setForm((current) => ({ ...current, role }));
+  }
+
   return (
     <main className="auth-layout">
       <section className="auth-art">
-        <div className="live-chip">
-          <span />
-          Live quiz room
+        <nav className="auth-nav" aria-label="Основные сценарии">
+          <div className="brand compact">
+            <span className="brand-mark">Q</span>
+            <strong>QuizHub Live</strong>
+          </div>
+          <button onClick={() => chooseRoute("participant")}>Участнику</button>
+          <button onClick={() => chooseRoute("organizer")}>Организатору</button>
+          <button onClick={() => setMode("login")}>Войти</button>
+        </nav>
+
+        <div className="auth-hero">
+          <div className="auth-copy">
+            <div className="live-chip">
+              <span />
+              Live quiz room
+            </div>
+            <h1>Запускайте квизы, где каждый сразу понимает свой следующий шаг.</h1>
+            <p>Участник входит по коду комнаты. Организатор собирает вопросы, открывает эфир и видит ответы в реальном времени.</p>
+
+            <div className="route-grid" aria-label="Выбор роли">
+              {routes.map((route) => {
+                const Icon = route.icon;
+                const active = mode === "register" && form.role === route.role;
+                return (
+                  <button
+                    className={active ? "route-card active" : "route-card"}
+                    key={route.role}
+                    onClick={() => chooseRoute(route.role)}
+                    type="button"
+                  >
+                    <Icon size={22} />
+                    <strong>{route.title}</strong>
+                    <span>{route.text}</span>
+                    <small>
+                      {route.action}
+                      <ArrowUpRight size={14} />
+                    </small>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <aside className="room-preview" aria-label="Пример live-комнаты">
+            <div className="preview-top">
+              <span>ROOM</span>
+              <strong>A1B2C3</strong>
+            </div>
+            <div className="preview-question">
+              <p>Вопрос на экране</p>
+              <strong>Как работает WebSocket в live-квизе?</strong>
+            </div>
+            <div className="preview-options">
+              <span className="picked">A. Единое состояние</span>
+              <span>B. Только стили</span>
+              <span>C. Файл сборки</span>
+            </div>
+            <div className="preview-footer">
+              <div>
+                <UsersRound size={16} />
+                24 участника
+              </div>
+              <div>
+                <Sparkles size={16} />
+                live
+              </div>
+            </div>
+          </aside>
         </div>
-        <h1>Квиз запускается за минуты, ответы летят в реальном времени.</h1>
-        <p>Организатор собирает вопросы, открывает комнату по коду, участники отвечают только пока вопрос на экране.</p>
-        <div className="auth-stats">
-          <div>
-            <strong>WebSocket</strong>
-            <span>единое состояние комнаты</span>
-          </div>
-          <div>
-            <strong>Баллы</strong>
-            <span>точность и бонус скорости</span>
-          </div>
-          <div>
-            <strong>История</strong>
-            <span>результаты сохраняются</span>
-          </div>
+
+        <div className="auth-flow">
+          {flow.map((item) => (
+            <div key={item.value}>
+              <strong>{item.value}</strong>
+              <span>{item.label}</span>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -54,7 +140,8 @@ export function AuthPage({ onAuth, notify, toast }) {
         <div className="brand big">
           <span className="brand-mark">Q</span>
           <div>
-            <strong>QuizHub Live</strong>
+            <strong>{mode === "login" ? "Вход в кабинет" : "Новый аккаунт"}</strong>
+            <small>{mode === "login" ? "Продолжите работу с квизами" : "Выберите роль и начните сценарий"}</small>
           </div>
         </div>
 
@@ -66,6 +153,25 @@ export function AuthPage({ onAuth, notify, toast }) {
             Регистрация
           </button>
         </div>
+
+        {mode === "register" && (
+          <div className="role-switch" aria-label="Роль аккаунта">
+            {routes.map((route) => {
+              const Icon = route.icon;
+              return (
+                <button
+                  className={form.role === route.role ? "selected" : ""}
+                  key={route.role}
+                  onClick={() => setForm({ ...form, role: route.role })}
+                  type="button"
+                >
+                  <Icon size={18} />
+                  <span>{route.title}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <form onSubmit={submit} className="form-grid">
           {mode === "register" && (
@@ -100,17 +206,18 @@ export function AuthPage({ onAuth, notify, toast }) {
           </label>
 
           {mode === "register" && (
-            <label>
-              Роль
-              <select value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })}>
-                <option value="participant">Участник</option>
-                <option value="organizer">Организатор</option>
-              </select>
-            </label>
+            <div className="selected-route">
+              <KeyRound size={18} />
+              <span>
+                {form.role === "organizer"
+                  ? "После регистрации откроется кабинет организатора с конструктором."
+                  : "После регистрации откроется кабинет участника с входом по коду комнаты."}
+              </span>
+            </div>
           )}
 
           <button className="primary wide" type="submit">
-            <ChevronRight size={18} />
+            {mode === "login" ? <Radio size={18} /> : <ChevronRight size={18} />}
             {mode === "login" ? "Войти" : "Создать аккаунт"}
           </button>
         </form>

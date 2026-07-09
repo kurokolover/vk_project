@@ -1,4 +1,4 @@
-import { Crown, ListChecks, Plus, Radio } from "lucide-react";
+import { ArrowUpRight, Crown, ListChecks, Play, Plus, Radio, Save, UsersRound } from "lucide-react";
 import { HistoryPage } from "../History/HistoryPage";
 import "./DashboardPage.css";
 
@@ -13,6 +13,18 @@ export function DashboardPage({ user, dashboard, setView }) {
     { label: "Комнат в истории", value: stats.sessions, icon: Radio },
     { label: "Побед", value: stats.wins, icon: Crown }
   ];
+  const guide =
+    user.role === "organizer"
+      ? [
+          { title: "Соберите вопросы", text: "Название, категории, время, баллы и варианты ответов.", icon: ListChecks },
+          { title: "Запустите комнату", text: "Система создаст код для подключения участников.", icon: Play },
+          { title: "Сохраните итоги", text: "Лидерборд попадет в историю после финала.", icon: Save }
+        ]
+      : [
+          { title: "Получите код", text: "Организатор покажет код комнаты перед стартом.", icon: Radio },
+          { title: "Отвечайте в эфире", text: "Ответ доступен только пока вопрос открыт.", icon: UsersRound },
+          { title: "Смотрите место", text: "После финала появится общий лидерборд.", icon: Crown }
+        ];
 
   return (
     <section className="stack">
@@ -42,6 +54,29 @@ export function DashboardPage({ user, dashboard, setView }) {
           {user.role === "organizer" ? <Plus size={18} /> : <Radio size={18} />}
           {user.role === "organizer" ? "Открыть конструктор" : "Подключиться"}
         </button>
+      </div>
+
+      <div className="guide-grid">
+        {guide.map((item, index) => {
+          const Icon = item.icon;
+          return (
+            <article className="guide-card" key={item.title}>
+              <div>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <Icon size={20} />
+              </div>
+              <strong>{item.title}</strong>
+              <p>{item.text}</p>
+              <button
+                className="guide-link"
+                onClick={() => setView(user.role === "organizer" && index === 0 ? "builder" : "room")}
+              >
+                Перейти
+                <ArrowUpRight size={15} />
+              </button>
+            </article>
+          );
+        })}
       </div>
 
       <HistoryPage dashboard={dashboard} compact />
