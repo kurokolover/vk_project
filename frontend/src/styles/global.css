@@ -3,11 +3,14 @@
 }
 
 html {
+  width: 100%;
   min-width: 320px;
   background: var(--rose-100);
+  overflow-x: hidden;
 }
 
 body {
+  width: 100%;
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
@@ -16,6 +19,12 @@ body {
     radial-gradient(ellipse 760px 520px at 82% 18%, rgba(226, 138, 164, 0.58), transparent 64%),
     radial-gradient(ellipse 860px 560px at 8% 7%, rgba(255, 250, 247, 0.98), transparent 66%),
     linear-gradient(145deg, #f8dce4 0%, #fff9f7 45%, #f2c6d3 100%);
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  min-width: 0;
   overflow-x: hidden;
 }
 
@@ -57,6 +66,7 @@ button,
 input,
 textarea,
 select {
+  min-width: 0;
   font: inherit;
 }
 
@@ -141,10 +151,18 @@ h2,
 h3,
 p {
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 main {
   min-width: 0;
+}
+
+img,
+svg,
+canvas,
+video {
+  max-width: 100%;
 }
 
 small {
@@ -273,6 +291,8 @@ small {
   border-radius: var(--radius-pill);
   padding: 12px 22px;
   font-weight: 900;
+  max-width: 100%;
+  white-space: normal;
   transition:
     transform 180ms var(--ease),
     box-shadow 180ms var(--ease),
@@ -455,5 +475,23 @@ small {
 
   .span-2 {
     grid-column: span 1;
+  }
+
+  .primary,
+  .secondary {
+    padding-inline: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  input,
+  textarea,
+  select {
+    min-height: 48px;
+    padding-inline: 14px;
+  }
+
+  .surface {
+    padding: 18px;
   }
 }

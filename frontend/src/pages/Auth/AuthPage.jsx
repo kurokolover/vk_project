@@ -37,6 +37,11 @@ export function AuthPage({ onAuth, notify, toast }) {
 
   async function submit(event) {
     event.preventDefault();
+    if (mode === "register" && String(form.password || "").length < 6) {
+      notify("Пароль должен быть минимум 6 символов");
+      return;
+    }
+
     try {
       const data = await apiRequest(mode === "login" ? "/api/auth/login" : "/api/auth/register", {
         method: "POST",
@@ -106,12 +111,12 @@ export function AuthPage({ onAuth, notify, toast }) {
             </div>
             <div className="preview-question">
               <p>Вопрос на экране</p>
-              <strong>Как работает WebSocket в live-квизе?</strong>
+              <strong>Какая планета известна как Красная?</strong>
             </div>
             <div className="preview-options">
-              <span className="picked">A. Единое состояние</span>
-              <span>B. Только стили</span>
-              <span>C. Файл сборки</span>
+              <span className="picked">A. Марс</span>
+              <span>B. Венера</span>
+              <span>C. Юпитер</span>
             </div>
             <div className="preview-footer">
               <div>
@@ -199,6 +204,8 @@ export function AuthPage({ onAuth, notify, toast }) {
             Пароль
             <input
               type="password"
+              minLength={mode === "register" ? 6 : undefined}
+              required
               value={form.password}
               onChange={(event) => setForm({ ...form, password: event.target.value })}
               placeholder="Минимум 6 символов"

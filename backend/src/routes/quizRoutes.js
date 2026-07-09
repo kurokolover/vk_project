@@ -1,4 +1,5 @@
 import express from "express";
+import { ensureDefaultQuizzes } from "../data/defaultQuizzes.js";
 import { createId, createRoomCode, normalizeQuiz, roomPayload, sanitizeQuiz, validateQuiz } from "../quizzes/quizService.js";
 
 export function createQuizRouter({ store, authService }) {
@@ -7,6 +8,9 @@ export function createQuizRouter({ store, authService }) {
 
   router.get("/quizzes", async (req, res) => {
     const db = await store.read();
+    if (req.user.role === "organizer" && ensureDefaultQuizzes(db, req.user.id)) {
+      await store.write(db);
+    }
     res.json({
       quizzes: db.quizzes
         .filter((quiz) => quiz.organizerId === req.user.id)

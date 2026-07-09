@@ -1,4 +1,5 @@
 import express from "express";
+import { createDefaultQuizzes } from "../data/defaultQuizzes.js";
 import { createId } from "../quizzes/quizService.js";
 
 export function createAuthRouter({ store, authService }) {
@@ -7,6 +8,7 @@ export function createAuthRouter({ store, authService }) {
   router.post("/register", async (req, res) => {
     const { name, email, password, role } = req.body;
     if (!name || !email || !password) return res.status(400).json({ message: "Заполните имя, email и пароль" });
+    if (String(password).length < 6) return res.status(400).json({ message: "Пароль должен быть минимум 6 символов" });
     if (!["participant", "organizer"].includes(role)) return res.status(400).json({ message: "Выберите роль" });
 
     const db = await store.read();
@@ -24,6 +26,9 @@ export function createAuthRouter({ store, authService }) {
     };
 
     db.users.push(user);
+    if (role === "organizer") {
+      db.quizzes.push(...createDefaultQuizzes(user.id));
+    }
     await store.write(db);
     res.json({ token: authService.signToken(user), user: authService.publicUser(user) });
   });

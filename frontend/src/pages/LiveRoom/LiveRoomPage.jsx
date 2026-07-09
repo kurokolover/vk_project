@@ -1,6 +1,19 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
-import { Check, Clock3, Copy, Crown, ListChecks, Play, Radio, Send, Trophy, Users } from "lucide-react";
+import {
+  AlertTriangle,
+  Check,
+  Clock3,
+  Copy,
+  Crown,
+  ListChecks,
+  LogOut,
+  Play,
+  Radio,
+  Send,
+  Trophy,
+  Users
+} from "lucide-react";
 import { Leaderboard } from "../../components/Leaderboard/Leaderboard";
 import { RoomBadge } from "../../components/RoomBadge/RoomBadge";
 import "./LiveRoomPage.css";
@@ -10,6 +23,8 @@ export function LiveRoomPage({ token, user, initialCode, notify, refresh }) {
   const [state, setState] = useState(null);
   const [selected, setSelected] = useState([]);
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
+  const [finishModalOpen, setFinishModalOpen] = useState(false);
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   const [socket, setSocket] = useState(null);
   const [now, setNow] = useState(Date.now());
 
@@ -31,6 +46,12 @@ export function LiveRoomPage({ token, user, initialCode, notify, refresh }) {
     setAnswerSubmitted(false);
   }, [state?.session?.currentQuestionIndex, state?.session?.status]);
 
+  useEffect(() => {
+    if (user.role === "participant" && state?.session?.status === "finished") {
+      setFinishModalOpen(true);
+    }
+  }, [state?.session?.status, user.role]);
+
   function joinRoom(targetCode = code) {
     const cleanCode = targetCode.trim().toUpperCase();
     if (!cleanCode) {
@@ -49,9 +70,32 @@ export function LiveRoomPage({ token, user, initialCode, notify, refresh }) {
       }
       setState(response.payload);
       setCode(cleanCode);
+      setFinishModalOpen(false);
+      setLeaveConfirmOpen(false);
       refresh();
     });
     setSocket(nextSocket);
+  }
+
+  function leaveRoom() {
+    socket?.disconnect();
+    setSocket(null);
+    setState(null);
+    setSelected([]);
+    setAnswerSubmitted(false);
+    setFinishModalOpen(false);
+    setLeaveConfirmOpen(false);
+    setCode("");
+    refresh();
+  }
+
+  function requestLeaveRoom() {
+    if (!state) return;
+    if (state.session.status === "finished") {
+      leaveRoom();
+      return;
+    }
+    setLeaveConfirmOpen(true);
   }
 
   function emit(event, payload = {}) {
@@ -125,7 +169,13 @@ export function LiveRoomPage({ token, user, initialCode, notify, refresh }) {
                 <p className="eyebrow">{state.quiz?.categories?.join(" / ") || "Live quiz"}</p>
                 <h2>{state.quiz?.title}</h2>
               </div>
-              <RoomBadge status={state.session.status} secondsLeft={secondsLeft} />
+              <div className="room-actions">
+                <RoomBadge status={state.session.status} secondsLeft={secondsLeft} />
+                <button className="secondary compact" onClick={requestLeaveRoom}>
+                  <LogOut size={16} />
+                  Выйти
+                </button>
+              </div>
             </div>
 
             <div className="room-code">
@@ -257,6 +307,45 @@ export function LiveRoomPage({ token, user, initialCode, notify, refresh }) {
           {!state?.session?.participants?.length && <small>Пока никого нет</small>}
         </div>
       </aside>
+
+      {finishModalOpen && user.role === "participant" && (
+        <div className="room-modal" role="dialog" aria-modal="true" aria-labelledby="finish-title">
+          <div className="room-modal-card">
+            <Crown size={38} />
+            <p className="eyebrow">Квиз завершён</p>
+            <h2 id="finish-title">Спасибо за игру!</h2>
+            <p>
+              {winner
+                ? `Победитель: ${winner.name}. Ваш результат уже сохранён в истории.`
+                : "Результаты сохранены в истории участия."}
+            </p>
+            <button className="primary wide" onClick={leaveRoom}>
+              <LogOut size={18} />
+              Выйти из комнаты
+            </button>
+          </div>
+        </div>
+      )}
+
+      {leaveConfirmOpen && (
+        <div className="room-modal" role="dialog" aria-modal="true" aria-labelledby="leave-title">
+          <div className="room-modal-card">
+            <AlertTriangle size={38} />
+            <p className="eyebrow">Выход из комнаты</p>
+            <h2 id="leave-title">Вы точно хотите покинуть квиз?</h2>
+            <p>Если вопрос сейчас открыт, выбранный ответ не будет отправлен после выхода.</p>
+            <div className="modal-actions">
+              <button className="secondary" onClick={() => setLeaveConfirmOpen(false)}>
+                Остаться
+              </button>
+              <button className="primary" onClick={leaveRoom}>
+                <LogOut size={18} />
+                Покинуть
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

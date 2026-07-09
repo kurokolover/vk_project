@@ -5,7 +5,7 @@ import { apiRequest } from "../../services/api";
 import { createEmptyQuestion, createOption } from "../../utils/quizFactory";
 import "./BuilderPage.css";
 
-const categoryPresets = ["Frontend", "Backend", "WebSocket", "Продукт", "Дизайн", "История", "VK", "Музыка"];
+const categoryPresets = ["Общий кругозор", "Лёгкий", "Средний", "Сложный", "История", "Наука", "Культура", "География"];
 
 export function BuilderPage({ token, quizzes, setQuizzes, setRoomCode, setView, notify, refresh }) {
   const [selectedId, setSelectedId] = useState(quizzes[0]?.id || "new");

@@ -1,4 +1,4 @@
-import { History, LayoutDashboard, LogOut, Radio, Settings, Sparkles } from "lucide-react";
+import { History, LayoutDashboard, LogOut, Radio, Settings } from "lucide-react";
 import "./AppShell.css";
 
 const viewTitles = {
@@ -7,7 +7,7 @@ const viewTitles = {
   history: "История и результаты"
 };
 
-export function AppShell({ user, view, onViewChange, onRefresh, onLogout, children }) {
+export function AppShell({ user, view, onViewChange, onLogout, children }) {
   const navItems = [
     { id: "dashboard", label: "Обзор", icon: LayoutDashboard },
     ...(user.role === "organizer" ? [{ id: "builder", label: "Конструктор", icon: Settings }] : []),
@@ -62,10 +62,6 @@ export function AppShell({ user, view, onViewChange, onRefresh, onLogout, childr
             <p className="eyebrow">Прототип квиз-платформы</p>
             <h1>{title}</h1>
           </div>
-          <button className="primary ghost" onClick={onRefresh}>
-            <Sparkles size={18} />
-            Обновить
-          </button>
         </header>
 
         {children}

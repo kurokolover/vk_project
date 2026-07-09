@@ -62,7 +62,7 @@ export function App() {
   }
 
   return (
-    <AppShell user={user} view={view} onViewChange={setView} onRefresh={refresh} onLogout={logout}>
+    <AppShell user={user} view={view} onViewChange={setView} onLogout={logout}>
       {view === "dashboard" && <DashboardPage user={user} dashboard={dashboard} setView={setView} />}
       {view === "builder" && user.role === "organizer" && (
         <BuilderPage
