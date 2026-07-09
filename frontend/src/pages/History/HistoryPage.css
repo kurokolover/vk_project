@@ -8,10 +8,11 @@
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.68);
-  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.48);
+  box-shadow: var(--inner-glow), 0 10px 24px rgba(137, 66, 86, 0.08);
+  padding: 14px;
   transition:
     transform 180ms var(--ease),
     box-shadow 180ms var(--ease),
@@ -19,7 +20,7 @@
 }
 
 .history-table article:hover {
-  border-color: rgba(11, 122, 117, 0.22);
+  border-color: rgba(255, 255, 255, 0.82);
   box-shadow: var(--shadow-sm);
   transform: translateY(-1px);
 }

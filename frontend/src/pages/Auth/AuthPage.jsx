@@ -55,7 +55,6 @@ export function AuthPage({ onAuth, notify, toast }) {
           <span className="brand-mark">Q</span>
           <div>
             <strong>QuizHub Live</strong>
-            <small>MVP для VK Project</small>
           </div>
         </div>
 

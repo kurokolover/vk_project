@@ -5,6 +5,8 @@ import { apiRequest } from "../../services/api";
 import { createEmptyQuestion, createOption } from "../../utils/quizFactory";
 import "./BuilderPage.css";
 
+const categoryPresets = ["Frontend", "Backend", "WebSocket", "Продукт", "Дизайн", "История", "VK", "Музыка"];
+
 export function BuilderPage({ token, quizzes, setQuizzes, setRoomCode, setView, notify, refresh }) {
   const [selectedId, setSelectedId] = useState(quizzes[0]?.id || "new");
   const selectedQuiz = quizzes.find((quiz) => quiz.id === selectedId);
@@ -44,6 +46,32 @@ export function BuilderPage({ token, quizzes, setQuizzes, setRoomCode, setView, 
     });
     updateQuestion(question.id, { options });
   }
+
+  function getDraftCategories() {
+    const raw = Array.isArray(draft.categories) ? draft.categories.join(", ") : draft.categories || "";
+    return raw
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  function toggleCategory(category) {
+    const categories = getDraftCategories();
+    const next = categories.includes(category)
+      ? categories.filter((item) => item !== category)
+      : [...categories, category];
+    setDraft({ ...draft, categories: next.join(", ") });
+  }
+
+  const summary = draft.questions.reduce(
+    (acc, question) => ({
+      totalTime: acc.totalTime + Number(question.timeLimit || 0),
+      totalPoints: acc.totalPoints + Number(question.points || 0),
+      imageQuestions: acc.imageQuestions + (question.type === "image" ? 1 : 0),
+      multiQuestions: acc.multiQuestions + (question.choiceMode === "multiple" ? 1 : 0)
+    }),
+    { totalTime: 0, totalPoints: 0, imageQuestions: 0, multiQuestions: 0 }
+  );
 
   async function save() {
     try {
@@ -96,6 +124,13 @@ export function BuilderPage({ token, quizzes, setQuizzes, setRoomCode, setView, 
             <span>{quiz.title}</span>
           </button>
         ))}
+
+        <div className="builder-inspector">
+          <p className="eyebrow">Сводка</p>
+          <strong>{draft.questions.length} вопросов</strong>
+          <span>{summary.totalTime} сек · {summary.totalPoints} баллов</span>
+          <span>{summary.imageQuestions} image · {summary.multiQuestions} multi</span>
+        </div>
       </aside>
 
       <div className="builder-main">
@@ -137,6 +172,18 @@ export function BuilderPage({ token, quizzes, setQuizzes, setRoomCode, setView, 
                 rows={2}
               />
             </label>
+          </div>
+
+          <div className="category-picker">
+            {categoryPresets.map((category) => (
+              <button
+                className={getDraftCategories().includes(category) ? "category-chip active" : "category-chip"}
+                key={category}
+                onClick={() => toggleCategory(category)}
+              >
+                {category}
+              </button>
+            ))}
           </div>
 
           <div className="rule-line">

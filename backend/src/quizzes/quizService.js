@@ -56,6 +56,8 @@ export function buildLeaderboard(session) {
 export function roomPayload(session, db, viewerRole = "participant") {
   const quiz = db.quizzes.find((item) => item.id === session.quizId);
   const reveal = session.status === "review" || session.status === "finished" || viewerRole === "organizer";
+  const question = quiz ? activeQuestion(quiz, session, reveal) : null;
+  const currentAnswers = question ? session.answers?.[question.id] || {} : {};
 
   return {
     session: {
@@ -66,6 +68,7 @@ export function roomPayload(session, db, viewerRole = "participant") {
       questionStartedAt: session.questionStartedAt,
       questionEndsAt: session.questionEndsAt,
       participants: Object.values(session.participants || {}),
+      answeredCurrentQuestion: Object.keys(currentAnswers).length,
       leaderboard: buildLeaderboard(session),
       totalQuestions: quiz?.questions.length || 0
     },
@@ -78,7 +81,7 @@ export function roomPayload(session, db, viewerRole = "participant") {
           rules: quiz.rules
         }
       : null,
-    question: quiz ? activeQuestion(quiz, session, reveal) : null
+    question
   };
 }
 

@@ -2,10 +2,10 @@
   display: inline-flex;
   min-height: 32px;
   align-items: center;
-  border: 1px solid var(--line);
+  border: 1px solid rgba(255, 255, 255, 0.58);
   border-radius: 999px;
-  background: rgba(25, 83, 95, 0.07);
-  color: var(--dark-teal);
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--ink-strong);
   padding: 6px 12px;
   font-size: 13px;
   font-weight: 900;
@@ -13,19 +13,19 @@
 }
 
 .status-pill.active {
-  border-color: rgba(123, 45, 38, 0.24);
-  background: rgba(123, 45, 38, 0.1);
-  color: var(--danger);
+  border-color: rgba(255, 255, 255, 0.7);
+  background: rgba(196, 92, 122, 0.16);
+  color: var(--rose-700);
 }
 
 .status-pill.review {
-  border-color: rgba(215, 201, 170, 0.64);
-  background: rgba(215, 201, 170, 0.28);
-  color: #5e5132;
+  border-color: rgba(255, 255, 255, 0.66);
+  background: rgba(244, 191, 205, 0.24);
+  color: var(--rose-700);
 }
 
 .status-pill.finished {
-  border-color: rgba(11, 122, 117, 0.3);
-  background: rgba(11, 122, 117, 0.1);
-  color: var(--deep-ocean);
+  border-color: rgba(255, 255, 255, 0.66);
+  background: rgba(25, 23, 25, 0.08);
+  color: var(--ink-strong);
 }

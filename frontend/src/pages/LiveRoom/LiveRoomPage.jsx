@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
-import { Check, Clock3, Copy, ListChecks, Play, Radio, Trophy, Users } from "lucide-react";
+import { Check, Clock3, Copy, Crown, ListChecks, Play, Radio, Send, Trophy, Users } from "lucide-react";
 import { Leaderboard } from "../../components/Leaderboard/Leaderboard";
 import { RoomBadge } from "../../components/RoomBadge/RoomBadge";
 import "./LiveRoomPage.css";
@@ -9,6 +9,7 @@ export function LiveRoomPage({ token, user, initialCode, notify, refresh }) {
   const [code, setCode] = useState(initialCode || "");
   const [state, setState] = useState(null);
   const [selected, setSelected] = useState([]);
+  const [answerSubmitted, setAnswerSubmitted] = useState(false);
   const [socket, setSocket] = useState(null);
   const [now, setNow] = useState(Date.now());
 
@@ -27,6 +28,7 @@ export function LiveRoomPage({ token, user, initialCode, notify, refresh }) {
 
   useEffect(() => {
     setSelected([]);
+    setAnswerSubmitted(false);
   }, [state?.session?.currentQuestionIndex, state?.session?.status]);
 
   function joinRoom(targetCode = code) {
@@ -59,6 +61,18 @@ export function LiveRoomPage({ token, user, initialCode, notify, refresh }) {
     });
   }
 
+  function submitAnswer() {
+    socket?.emit("participant:answer", { optionIds: selected }, (response) => {
+      if (!response?.ok) {
+        notify(response?.message || "Ответ не отправлен");
+        return;
+      }
+      setAnswerSubmitted(true);
+      notify("Ответ принят");
+      refresh();
+    });
+  }
+
   function toggleOption(optionId) {
     const question = state?.question;
     if (!question) return;
@@ -77,6 +91,12 @@ export function LiveRoomPage({ token, user, initialCode, notify, refresh }) {
     ? Math.max(0, Math.ceil((state.session.questionEndsAt - now) / 1000))
     : 0;
   const canAnswer = user.role === "participant" && state?.session?.status === "active";
+  const timeProgress = state?.question?.timeLimit
+    ? Math.max(0, Math.min(100, (secondsLeft / state.question.timeLimit) * 100))
+    : 0;
+  const participantsCount = state?.session?.participants?.length || 0;
+  const answeredCount = state?.session?.answeredCurrentQuestion || 0;
+  const winner = state?.session?.leaderboard?.[0];
 
   return (
     <section className="room-grid">
@@ -110,10 +130,35 @@ export function LiveRoomPage({ token, user, initialCode, notify, refresh }) {
 
             <div className="room-code">
               <span>{state.session.code}</span>
-              <button className="icon-btn" title="Скопировать код" onClick={() => navigator.clipboard?.writeText(state.session.code)}>
+              <button
+                className="icon-btn"
+                title="Скопировать код"
+                onClick={() => {
+                  navigator.clipboard?.writeText(state.session.code);
+                  notify("Код комнаты скопирован");
+                }}
+              >
                 <Copy size={18} />
               </button>
             </div>
+
+            <div className="room-progress">
+              <div>
+                <span style={{ width: `${timeProgress}%` }} />
+              </div>
+              <strong>{answeredCount}/{participantsCount} ответили</strong>
+            </div>
+
+            {state.session.status === "finished" && (
+              <div className="winner-panel">
+                <Crown size={34} />
+                <div>
+                  <p className="eyebrow">Победитель</p>
+                  <h3>{winner ? winner.name : "Пока нет участников"}</h3>
+                  <span>{winner ? `${winner.score} баллов · ${winner.correctAnswers} верных` : "Запустите комнату с участниками"}</span>
+                </div>
+              </div>
+            )}
 
             {state.question ? (
               <article className="active-question">
@@ -147,7 +192,7 @@ export function LiveRoomPage({ token, user, initialCode, notify, refresh }) {
                         option.correct === false && state.session.status !== "active" ? "muted" : ""
                       ].join(" ")}
                       key={option.id}
-                      disabled={!canAnswer}
+                      disabled={!canAnswer || answerSubmitted}
                       onClick={() => toggleOption(option.id)}
                     >
                       <span>{String.fromCharCode(65 + index)}</span>
@@ -159,11 +204,11 @@ export function LiveRoomPage({ token, user, initialCode, notify, refresh }) {
                 {user.role === "participant" && (
                   <button
                     className="primary wide"
-                    disabled={!canAnswer || selected.length === 0}
-                    onClick={() => emit("participant:answer", { optionIds: selected })}
+                    disabled={!canAnswer || selected.length === 0 || answerSubmitted}
+                    onClick={submitAnswer}
                   >
-                    <Check size={18} />
-                    Отправить ответ
+                    {answerSubmitted ? <Check size={18} /> : <Send size={18} />}
+                    {answerSubmitted ? "Ответ отправлен" : "Отправить ответ"}
                   </button>
                 )}
               </article>

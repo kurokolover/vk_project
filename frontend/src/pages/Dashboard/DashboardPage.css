@@ -10,11 +10,14 @@
 }
 
 .metric-card {
+  position: relative;
+  overflow: hidden;
   display: grid;
-  min-height: 148px;
+  min-height: 168px;
   align-content: space-between;
   gap: 8px;
-  padding: 20px;
+  border-radius: 34px;
+  padding: 24px;
   transition:
     transform 220ms var(--ease),
     box-shadow 220ms var(--ease),
@@ -22,19 +25,19 @@
 }
 
 .metric-card:hover {
-  border-color: rgba(11, 122, 117, 0.22);
+  border-color: rgba(255, 255, 255, 0.78);
   box-shadow: var(--shadow-lg);
   transform: translateY(-3px);
 }
 
 .metric-card svg {
-  color: var(--deep-ocean);
+  color: var(--rose-500);
 }
 
 .metric-card strong {
   color: var(--ink-strong);
-  font-size: 42px;
-  font-weight: 900;
+  font-size: 58px;
+  font-weight: 950;
   line-height: 1;
 }
 
@@ -45,41 +48,53 @@
 
 .action-band {
   position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
   overflow: hidden;
-  border: 1px solid rgba(215, 201, 170, 0.24);
-  border-radius: var(--radius);
+  border: 1px solid rgba(255, 255, 255, 0.54);
+  border-radius: 38px;
   background:
-    linear-gradient(135deg, rgba(8, 43, 49, 0.98), rgba(25, 83, 95, 0.94) 55%, rgba(11, 122, 117, 0.92));
-  color: #ffffff;
+    radial-gradient(ellipse 420px 240px at 78% 50%, rgba(255, 255, 255, 0.32), transparent 58%),
+    linear-gradient(135deg, rgba(25, 23, 25, 0.98), rgba(41, 31, 35, 0.92) 55%, rgba(196, 92, 122, 0.82));
+  color: #fffaf7;
   box-shadow: var(--shadow-lg);
-  padding: 28px;
+  padding: 34px;
 }
 
 .action-band::after {
   position: absolute;
-  inset: auto 0 0;
-  height: 4px;
+  right: 44px;
+  bottom: -72px;
+  z-index: 0;
+  width: 260px;
+  height: 210px;
+  pointer-events: none;
   content: "";
-  background: linear-gradient(90deg, var(--pale-oak), var(--deep-ocean), var(--dark-wine));
+  border-radius: 48% 52% 58% 42% / 50% 42% 58% 50%;
+  background:
+    radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.78), transparent 17%),
+    linear-gradient(135deg, rgba(244, 191, 205, 0.82), rgba(216, 111, 143, 0.54));
+  box-shadow: inset -24px -20px 52px rgba(143, 64, 87, 0.22), inset 18px 16px 42px rgba(255, 255, 255, 0.38);
 }
 
 .action-band > * {
   position: relative;
+  z-index: 1;
 }
 
 .action-band .eyebrow {
-  color: var(--pale-oak);
+  color: var(--rose-200);
 }
 
 .action-band h2 {
   max-width: 760px;
   margin-top: 6px;
-  font-size: 28px;
-  line-height: 1.18;
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 1.05;
 }
 
 @media (max-width: 760px) {
