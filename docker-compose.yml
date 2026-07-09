@@ -1,0 +1,17 @@
+services:
+  quizhub:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      PORT: 3001
+      AUTH_SECRET: change-me-in-production
+      DATA_DIR: /app/backend/data
+      CLIENT_DIST: /app/dist
+    ports:
+      - "3001:3001"
+    volumes:
+      - quizhub-data:/app/backend/data
+
+volumes:
+  quizhub-data:

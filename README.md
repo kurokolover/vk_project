@@ -25,6 +25,44 @@ npm run dev
 
 API: `http://localhost:3001`
 
+## Структура проекта
+
+```text
+frontend/
+  index.html
+  src/
+    app/                 # корневая сборка клиентского приложения
+    components/          # общие UI-компоненты
+    pages/               # отдельная папка, JSX и CSS для каждой страницы
+    services/            # API-клиент
+    styles/              # дизайн-токены и глобальные стили
+    utils/               # небольшие frontend-утилиты
+
+backend/
+  index.js               # точка входа сервера
+  Dockerfile
+  src/
+    auth/                # авторизация, токены, middleware
+    config/              # runtime-конфиг
+    data/                # JSON-store
+    quizzes/             # доменная логика квизов
+    realtime/            # Socket.IO и live-сессии
+    routes/              # HTTP endpoints
+
+config/
+  app-info.json          # базовая информация о проекте
+  default-db.json        # стартовая структура JSON-хранилища
+```
+
+## Docker
+
+Перед запуском Docker-образа соберите клиент:
+
+```bash
+npm run build
+docker compose up --build
+```
+
 ## Стек
 
 - React + Vite

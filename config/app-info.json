@@ -1,0 +1,17 @@
+{
+  "productName": "QuizHub Live",
+  "description": "MVP веб-приложения для проведения квизов в реальном времени",
+  "frontend": {
+    "framework": "React + Vite",
+    "entry": "frontend/src/main.jsx"
+  },
+  "backend": {
+    "runtime": "Node.js + Express",
+    "realtime": "Socket.IO",
+    "entry": "backend/index.js"
+  },
+  "local": {
+    "clientUrl": "http://localhost:5173",
+    "apiUrl": "http://localhost:3001"
+  }
+}

@@ -1,0 +1,217 @@
+import { useEffect, useState } from "react";
+import { io } from "socket.io-client";
+import { Check, Clock3, Copy, ListChecks, Play, Radio, Trophy, Users } from "lucide-react";
+import { Leaderboard } from "../../components/Leaderboard/Leaderboard";
+import { RoomBadge } from "../../components/RoomBadge/RoomBadge";
+import "./LiveRoomPage.css";
+
+export function LiveRoomPage({ token, user, initialCode, notify, refresh }) {
+  const [code, setCode] = useState(initialCode || "");
+  const [state, setState] = useState(null);
+  const [selected, setSelected] = useState([]);
+  const [socket, setSocket] = useState(null);
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 250);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (initialCode) setCode(initialCode);
+  }, [initialCode]);
+
+  useEffect(() => {
+    return () => socket?.disconnect();
+  }, [socket]);
+
+  useEffect(() => {
+    setSelected([]);
+  }, [state?.session?.currentQuestionIndex, state?.session?.status]);
+
+  function joinRoom(targetCode = code) {
+    const cleanCode = targetCode.trim().toUpperCase();
+    if (!cleanCode) {
+      notify("Введите код комнаты");
+      return;
+    }
+
+    socket?.disconnect();
+    const nextSocket = io("/", { transports: ["websocket", "polling"] });
+    nextSocket.on("room:update", (payload) => setState(payload));
+    nextSocket.emit("room:join", { code: cleanCode, token }, (response) => {
+      if (!response?.ok) {
+        notify(response?.message || "Не удалось подключиться");
+        nextSocket.disconnect();
+        return;
+      }
+      setState(response.payload);
+      setCode(cleanCode);
+      refresh();
+    });
+    setSocket(nextSocket);
+  }
+
+  function emit(event, payload = {}) {
+    socket?.emit(event, payload, (response) => {
+      if (!response?.ok) notify(response?.message || "Команда не выполнена");
+      refresh();
+    });
+  }
+
+  function toggleOption(optionId) {
+    const question = state?.question;
+    if (!question) return;
+
+    if (question.choiceMode === "single") {
+      setSelected([optionId]);
+      return;
+    }
+
+    setSelected((current) =>
+      current.includes(optionId) ? current.filter((item) => item !== optionId) : [...current, optionId]
+    );
+  }
+
+  const secondsLeft = state?.session?.questionEndsAt
+    ? Math.max(0, Math.ceil((state.session.questionEndsAt - now) / 1000))
+    : 0;
+  const canAnswer = user.role === "participant" && state?.session?.status === "active";
+
+  return (
+    <section className="room-grid">
+      <div className="surface room-stage">
+        <div className="join-line">
+          <label>
+            Код комнаты
+            <input value={code} onChange={(event) => setCode(event.target.value.toUpperCase())} placeholder="A1B2C3" />
+          </label>
+          <button className="primary" onClick={() => joinRoom()}>
+            <Radio size={18} />
+            Подключиться
+          </button>
+        </div>
+
+        {!state ? (
+          <div className="empty-state">
+            <Radio size={42} />
+            <h2>Откройте активную комнату</h2>
+            <p>Организатор запускает квиз из конструктора, участники входят по коду и видят вопрос синхронно.</p>
+          </div>
+        ) : (
+          <div className="live-panel">
+            <div className="live-head">
+              <div>
+                <p className="eyebrow">{state.quiz?.categories?.join(" / ") || "Live quiz"}</p>
+                <h2>{state.quiz?.title}</h2>
+              </div>
+              <RoomBadge status={state.session.status} secondsLeft={secondsLeft} />
+            </div>
+
+            <div className="room-code">
+              <span>{state.session.code}</span>
+              <button className="icon-btn" title="Скопировать код" onClick={() => navigator.clipboard?.writeText(state.session.code)}>
+                <Copy size={18} />
+              </button>
+            </div>
+
+            {state.question ? (
+              <article className="active-question">
+                <div className="question-meta">
+                  <span>
+                    <Clock3 size={16} />
+                    {state.question.timeLimit} сек
+                  </span>
+                  <span>
+                    <Trophy size={16} />
+                    {state.question.points} баллов
+                  </span>
+                  <span>
+                    {state.question.choiceMode === "multiple" ? <ListChecks size={16} /> : <Check size={16} />}
+                    {state.question.choiceMode === "multiple" ? "Несколько ответов" : "Один ответ"}
+                  </span>
+                </div>
+
+                <h3>{state.question.title}</h3>
+                {state.question.type === "image" && state.question.imageUrl && (
+                  <img className="question-image" src={state.question.imageUrl} alt="" />
+                )}
+
+                <div className="answer-grid">
+                  {state.question.options.map((option, index) => (
+                    <button
+                      className={[
+                        "answer-btn",
+                        selected.includes(option.id) ? "selected" : "",
+                        option.correct === true ? "correct" : "",
+                        option.correct === false && state.session.status !== "active" ? "muted" : ""
+                      ].join(" ")}
+                      key={option.id}
+                      disabled={!canAnswer}
+                      onClick={() => toggleOption(option.id)}
+                    >
+                      <span>{String.fromCharCode(65 + index)}</span>
+                      {option.text}
+                    </button>
+                  ))}
+                </div>
+
+                {user.role === "participant" && (
+                  <button
+                    className="primary wide"
+                    disabled={!canAnswer || selected.length === 0}
+                    onClick={() => emit("participant:answer", { optionIds: selected })}
+                  >
+                    <Check size={18} />
+                    Отправить ответ
+                  </button>
+                )}
+              </article>
+            ) : (
+              <div className="empty-state small">
+                <Play size={36} />
+                <h2>Комната готова</h2>
+                <p>Ждём участников и первый вопрос.</p>
+              </div>
+            )}
+
+            {user.role === "organizer" && (
+              <div className="host-controls">
+                <button className="primary" onClick={() => emit("host:start")}>
+                  <Play size={18} />
+                  {state.session.currentQuestionIndex + 1 >= state.session.totalQuestions ? "Завершить" : "Следующий вопрос"}
+                </button>
+                <button className="secondary" onClick={() => emit("host:close")}>
+                  <Clock3 size={18} />
+                  Закрыть вопрос
+                </button>
+                <button className="secondary danger-text" onClick={() => emit("host:finish")}>
+                  <Trophy size={18} />
+                  Финал
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <aside className="surface live-aside">
+        <div className="section-head compact-head">
+          <div>
+            <p className="eyebrow">Рейтинг</p>
+            <h2>Лидерборд</h2>
+          </div>
+          <Users size={22} />
+        </div>
+        <Leaderboard rows={state?.session?.leaderboard || []} />
+        <div className="participants">
+          <p className="eyebrow">В комнате</p>
+          {(state?.session?.participants || []).map((participant) => (
+            <span key={participant.userId}>{participant.name}</span>
+          ))}
+          {!state?.session?.participants?.length && <small>Пока никого нет</small>}
+        </div>
+      </aside>
+    </section>
+  );
+}
