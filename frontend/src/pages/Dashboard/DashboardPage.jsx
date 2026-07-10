@@ -1,85 +1,127 @@
-import { ArrowUpRight, Crown, ListChecks, Play, Plus, Radio, Save, UsersRound } from "lucide-react";
-import { HistoryPage } from "../History/HistoryPage";
+// @ts-check
+import { useMemo, useState } from "react";
+import { apiRequest } from "../../services/api";
+import { ControlPanel } from "./components/ControlPanel";
+import { DashboardHero } from "./components/DashboardHero";
+import { FlowGuide } from "./components/FlowGuide";
+import { MetricsGrid } from "./components/MetricsGrid";
+import { MvpConsole } from "./components/MvpConsole";
+import { createDashboardMetrics, getMvpTargetView, mvpItems, roleFlows } from "./dashboardContent";
 import "./DashboardPage.css";
 
-export function DashboardPage({ user, dashboard, setView }) {
+/**
+ * @typedef {import("./dashboardContent").AppView} AppView
+ * @typedef {import("./dashboardContent").DashboardStats} DashboardStats
+ * @typedef {import("./dashboardContent").UserRole} UserRole
+ * @typedef {{ id: string, title: string, categories: string[], questions: unknown[] }} QuizSummary
+ * @typedef {{ id: string, name: string, role: UserRole }} CurrentUser
+ * @typedef {{ stats?: DashboardStats }} DashboardData
+ */
+
+/**
+ * @param {{
+ *   user: CurrentUser,
+ *   dashboard: DashboardData | null,
+ *   quizzes?: QuizSummary[],
+ *   token: string,
+ *   setRoomCode: (code: string) => void,
+ *   setView: (view: AppView) => void,
+ *   notify: (message: string) => void,
+ *   refresh: () => void
+ * }} props
+ */
+export function DashboardPage({ user, dashboard, quizzes = [], token, setRoomCode, setView, notify, refresh }) {
+  const [quickCode, setQuickCode] = useState("");
+  const [activeMvpId, setActiveMvpId] = useState("live");
+  const [launchingId, setLaunchingId] = useState("");
   const stats = dashboard?.stats || { quizzes: 0, sessions: 0, wins: 0 };
-  const metrics = [
-    {
-      label: user.role === "organizer" ? "Создано квизов" : "Участий",
-      value: user.role === "organizer" ? stats.quizzes : stats.sessions,
-      icon: ListChecks
-    },
-    { label: "Комнат в истории", value: stats.sessions, icon: Radio },
-    { label: "Побед", value: stats.wins, icon: Crown }
-  ];
-  const guide =
-    user.role === "organizer"
-      ? [
-          { title: "Соберите вопросы", text: "Название, категории, время, баллы и варианты ответов.", icon: ListChecks },
-          { title: "Запустите комнату", text: "Система создаст код для подключения участников.", icon: Play },
-          { title: "Сохраните итоги", text: "Лидерборд попадет в историю после финала.", icon: Save }
-        ]
-      : [
-          { title: "Получите код", text: "Организатор покажет код комнаты перед стартом.", icon: Radio },
-          { title: "Отвечайте в эфире", text: "Ответ доступен только пока вопрос открыт.", icon: UsersRound },
-          { title: "Смотрите место", text: "После финала появится общий лидерборд.", icon: Crown }
-        ];
+  const flow = roleFlows[user.role];
+  const quickQuizzes = useMemo(() => quizzes.slice(0, 3), [quizzes]);
+  const metrics = useMemo(() => createDashboardMetrics(user.role, stats), [stats, user.role]);
+
+  function openBuilder() {
+    setView("builder");
+  }
+
+  function openRoom() {
+    setView("room");
+  }
+
+  function joinFromDashboard() {
+    const cleanCode = quickCode.trim().toUpperCase();
+    if (!cleanCode) {
+      notify("Введите код комнаты");
+      return;
+    }
+
+    setRoomCode(cleanCode);
+    openRoom();
+    notify(`Код ${cleanCode} перенесён в live-комнату`);
+  }
+
+  /**
+   * @param {string} quizId
+   */
+  async function launchQuiz(quizId) {
+    try {
+      setLaunchingId(quizId);
+      const data = await apiRequest(`/api/quizzes/${quizId}/launch`, { token, method: "POST" });
+      setRoomCode(data.session.code);
+      openRoom();
+      notify(`Комната ${data.session.code} создана`);
+      refresh();
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Не удалось запустить квиз");
+    } finally {
+      setLaunchingId("");
+    }
+  }
+
+  /**
+   * @param {number} stepIndex
+   */
+  function openFlowStep(stepIndex) {
+    setView(user.role === "organizer" && stepIndex === 0 ? "builder" : "room");
+  }
+
+  /**
+   * @param {string} itemId
+   */
+  function openMvpItem(itemId) {
+    setView(getMvpTargetView(user.role, itemId));
+  }
 
   return (
-    <section className="stack">
-      <div className="metrics-grid">
-        {metrics.map((metric) => {
-          const Icon = metric.icon;
-          return (
-            <article className="metric-card" key={metric.label}>
-              <Icon size={22} />
-              <strong>{metric.value}</strong>
-              <span>{metric.label}</span>
-            </article>
-          );
-        })}
-      </div>
+    <section className="stack dashboard-stack">
+      <MetricsGrid metrics={metrics} />
 
-      <div className="action-band">
-        <div>
-          <p className="eyebrow">{user.role === "organizer" ? "Следующий шаг" : "Быстрое подключение"}</p>
-          <h2>
-            {user.role === "organizer"
-              ? "Соберите квиз и запустите live-комнату"
-              : "Введите код комнаты, когда организатор покажет его на экране"}
-          </h2>
-        </div>
-        <button className="primary" onClick={() => setView(user.role === "organizer" ? "builder" : "room")}>
-          {user.role === "organizer" ? <Plus size={18} /> : <Radio size={18} />}
-          {user.role === "organizer" ? "Открыть конструктор" : "Подключиться"}
-        </button>
-      </div>
+      <section className="dashboard-grid">
+        <DashboardHero
+          role={user.role}
+          quickCode={quickCode}
+          onCreateQuiz={openBuilder}
+          onJoinByCode={joinFromDashboard}
+          onQuickCodeChange={setQuickCode}
+        />
 
-      <div className="guide-grid">
-        {guide.map((item, index) => {
-          const Icon = item.icon;
-          return (
-            <article className="guide-card" key={item.title}>
-              <div>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <Icon size={20} />
-              </div>
-              <strong>{item.title}</strong>
-              <p>{item.text}</p>
-              <button
-                className="guide-link"
-                onClick={() => setView(user.role === "organizer" && index === 0 ? "builder" : "room")}
-              >
-                Перейти
-                <ArrowUpRight size={15} />
-              </button>
-            </article>
-          );
-        })}
-      </div>
+        <ControlPanel
+          role={user.role}
+          flow={flow}
+          quizzes={quickQuizzes}
+          launchingId={launchingId}
+          onCreateQuiz={openBuilder}
+          onLaunchQuiz={launchQuiz}
+        />
+      </section>
 
-      <HistoryPage dashboard={dashboard} compact />
+      <MvpConsole
+        items={mvpItems}
+        activeId={activeMvpId}
+        onActiveChange={setActiveMvpId}
+        onOpenActive={openMvpItem}
+      />
+
+      <FlowGuide flow={flow} onOpenStep={openFlowStep} />
     </section>
   );
 }
