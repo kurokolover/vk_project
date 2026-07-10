@@ -35,7 +35,7 @@ QuizHub Live — работоспособный MVP веб-приложения 
 
 ## 5. Ссылки для сдачи
 
-- Макеты Miro/Figma: добавить ссылку после публикации макета.
+- Макеты Miro/Figma: https://www.figma.com/design/BzkfaaKvjN3zZcNMqn5S8R/QuizHub-Live-%E2%80%94-MVP-UI-Mockups?m=auto&t=79XnMDANXsVrxNCp-6
 - Репозиторий с кодовой базой: добавить ссылку на GitHub/GitLab после push.
 - Работоспособный продукт: опционально, можно задеплоить клиент и сервер на Render/Railway/Fly.io/Vercel + Node backend.
 
